@@ -2,6 +2,7 @@
 using System.Linq;
 using UnityEngine;
 using System.Collections;
+using System;
 
 public class GenerateNetwork : MonoBehaviour
 {
@@ -25,7 +26,7 @@ public class GenerateNetwork : MonoBehaviour
         particles = new Dictionary<string, ParticleSystem.Particle>();
         particleColor = new Dictionary<string, Color32>();
 
-        particles = InitializeNetwork(500);
+        particles = InitializeNetwork(200);
 
         // Start network with the particles from the blood dataset
         var main = ps.main;
@@ -90,14 +91,33 @@ public class GenerateNetwork : MonoBehaviour
                     startLifetime = 100000.0f,
                     startSize = 0.1f,
                     startColor = color,
-                    position = new Vector3(UnityEngine.Random.value * 50, UnityEngine.Random.value * 10, UnityEngine.Random.value * 50)
+                    position = new Vector3((UnityEngine.Random.value * 50) - 25, (UnityEngine.Random.value * 10) - 5, (UnityEngine.Random.value * 50) - 25)
                 };
                 particleDict[particle.ToString() + color] = new_particle;
                 particleColor[particle.ToString() + color] = color;
             }
         }
         
-        // TODO Edges
+        List<string> keys = Enumerable.ToList(particleDict.Keys);
+        int size = keys.Count;
+        for(int it = 0; it < 50; it++) {
+            for(int conn = 1; conn < numParticles; conn++) {
+                string gene1 = particleDict.ElementAt(UnityEngine.Random.Range(0, size)).Key;
+                string gene2 = particleDict.ElementAt(UnityEngine.Random.Range(0, size)).Key;
+
+                try {
+                    int randint = (int)(UnityEngine.Random.value * size);
+                    ParticleSystem.Particle particle = particleDict[gene1];
+                    Vector3 avoid_direction = particle.position - particleDict[keys[randint]].position;
+                    particle.position += avoid_direction.normalized / 10;
+                    Vector3 direction = particleDict[gene2].position - particle.position;                    
+                    particle.position += direction.normalized/5;
+                    particleDict[gene1] = particle;
+                } catch {
+                    continue;
+                }
+            }
+        }
 
         //return particlesReal;
         return particleDict;
